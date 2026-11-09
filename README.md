@@ -25,8 +25,9 @@ Whatever the device cannot decode, the server converts on the fly, as for FreeX 
 
 ## Requirements
 
-- **FreeX Media Server with the TV API** (CORS for apps and stream URLs with an access token, see
-  `docs/api.md` of the server). It is part of the server from the version after 0.21.0.
+- **FreeX Media Server with the TV API**: CORS for apps and stream URLs with an access token
+  ([freex-media-server#2](https://github.com/FreeX-Studio/freex-media-server/pull/2), in the release after 0.21.0).
+  Older servers answer the app's requests with "cross-site" errors.
 - The TV and the server in the same network, or the server reachable from the internet (HTTPS through a reverse
   proxy works too).
 
