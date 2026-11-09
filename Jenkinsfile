@@ -12,7 +12,8 @@
 
 // FreeX TV: the Android TV / Fire TV APK and the Samsung (Tizen) project.
 //
-// The build agent needs JDK 17, the Android SDK (ANDROID_HOME, platform 35 and build tools; the
+// The build agent needs JDK 17 or 21 (Gradle 8.14 does not run on Java 25; FREEX_JDK names the JDK
+// if it is not under /usr/lib/jvm), the Android SDK (ANDROID_HOME, platform 35 and build tools; the
 // Gradle wrapper fetches everything else) and zip. With the Tizen CLI (tizen in PATH or
 // ~/tizen-studio) and a certificate profile named in TIZEN_PROFILE it also signs FreeX.wgt.
 // A release keystore for the APK comes from the environment (FREEX_KEYSTORE,
@@ -31,7 +32,20 @@ pipeline {
         stage('Android') {
             steps {
                 dir('android') {
-                    sh './gradlew --no-daemon assembleRelease'
+                    sh '''
+                        # Gradle 8.14 (with the Android plugin 8.7) runs on Java 17 to 24, not on 25:
+                        # take FREEX_JDK, otherwise an installed JDK 21 or 17.
+                        for j in "${FREEX_JDK:-}" /usr/lib/jvm/java-21-openjdk-amd64 /usr/lib/jvm/temurin-21-jdk-amd64 \\
+                                 /usr/lib/jvm/java-17-openjdk-amd64 /usr/lib/jvm/temurin-17-jdk-amd64; do
+                            if [ -n "$j" ] && [ -x "$j/bin/java" ]; then export JAVA_HOME="$j"; break; fi
+                        done
+                        if [ -z "${JAVA_HOME:-}" ] || ! "$JAVA_HOME/bin/java" -version 2>&1 | grep -qE 'version "(17|21)'; then
+                            echo "No JDK 17 or 21 found: install one (apt install openjdk-21-jdk-headless) or set FREEX_JDK." >&2
+                            exit 1
+                        fi
+                        "$JAVA_HOME/bin/java" -version
+                        ./gradlew --no-daemon assembleRelease
+                    '''
                 }
                 sh '''
                     VERSION=$(sed -n 's/.*"version": *"\\([^"]*\\)".*/\\1/p' web/version.json)
