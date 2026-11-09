@@ -16,6 +16,13 @@
 // if it is not under /usr/lib/jvm), the Android SDK (ANDROID_HOME, platform 35 and build tools; the
 // Gradle wrapper fetches everything else) and zip. With the Tizen CLI (tizen in PATH or
 // ~/tizen-studio) and a certificate profile named in TIZEN_PROFILE it also signs FreeX.wgt.
+// The Android SDK once, as the Jenkins user (the command line tools from developer.android.com):
+//
+//   mkdir -p ~/android-sdk/cmdline-tools && cd ~/android-sdk/cmdline-tools
+//   unzip ~/commandlinetools-linux-*_latest.zip && mv cmdline-tools latest
+//   yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+//   ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+//
 // A release keystore for the APK comes from the environment (FREEX_KEYSTORE,
 // FREEX_KEYSTORE_PASSWORD, FREEX_KEY_ALIAS, FREEX_KEY_PASSWORD); without it the debug key signs.
 
@@ -44,6 +51,17 @@ pipeline {
                             exit 1
                         fi
                         "$JAVA_HOME/bin/java" -version
+                        # The Android SDK: ANDROID_HOME, otherwise the usual places.
+                        if [ -z "${ANDROID_HOME:-}" ]; then
+                            for s in "${ANDROID_SDK_ROOT:-}" "$HOME/android-sdk" "$HOME/Android/Sdk" /opt/android-sdk; do
+                                if [ -n "$s" ] && [ -d "$s/cmdline-tools" ]; then export ANDROID_HOME="$s"; break; fi
+                            done
+                        fi
+                        if [ -z "${ANDROID_HOME:-}" ]; then
+                            echo "No Android SDK found: install it to ~/android-sdk (see Jenkinsfile) or set ANDROID_HOME." >&2
+                            exit 1
+                        fi
+                        echo "ANDROID_HOME=$ANDROID_HOME"
                         ./gradlew --no-daemon assembleRelease
                     '''
                 }
