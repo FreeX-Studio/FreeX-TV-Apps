@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2026 MirraNET, Niklas Linz. All rights reserved.
+
+  This file is part of the MirraNET project and is licensed under the
+  GNU Lesser General Public License v3.0 (LGPLv3).
+
+  You may use, distribute and modify this code under the terms
+  of the LGPLv3 license. You should have received a copy of the
+  license along with this file. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>
+  or contact: niklas.linz@mirranet.de
+
+  FreeX TV for Samsung Smart TVs (Tizen 4.0 and newer, models from 2018 on).
+-->
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
+        id="https://freex.mirranet.de/tv" version="@VERSION@" viewmodes="maximized">
+    <tizen:application id="FrXTvApp01.FreeXTV" package="FrXTvApp01" required_version="4.0"/>
+    <name>FreeX</name>
+    <description>FreeX TV – the TV app for FreeX Media Server</description>
+    <author email="niklas.linz@mirranet.de" href="https://mirranet.de">MirraNET</author>
+    <icon src="icon.png"/>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <tizen:profile name="tv-samsung"/>
+
+    <!-- The app talks to the FreeX server the user enters, anywhere in the network or internet. -->
+    <access origin="*" subdomains="true"/>
+    <tizen:content-security-policy>default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; img-src * data: blob:; media-src * blob:; connect-src *</tizen:content-security-policy>
+
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/avplay"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
+
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
+                   encryption="disable" install-location="auto" hwkey-event="enable"/>
+</widget>

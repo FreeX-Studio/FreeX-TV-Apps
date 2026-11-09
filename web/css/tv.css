@@ -1,0 +1,1471 @@
+/*
+ * Copyright (c) 2026 MirraNET, Niklas Linz. All rights reserved.
+ *
+ * This file is part of the MirraNET project and is licensed under the
+ * GNU Lesser General Public License v3.0 (LGPLv3).
+ *
+ * You may use, distribute and modify this code under the terms
+ * of the LGPLv3 license. You should have received a copy of the
+ * license along with this file. If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>
+ * or contact: niklas.linz@mirranet.de
+ */
+
+/*
+ * FreeX TV, laid out for 1920 × 1080: 1rem is 10 px there and scales with the screen (app.js).
+ * The colours are those of FreeX Web. Everything stays inside a safe area of 5 % for TVs that
+ * cut the edges off (overscan).
+ */
+
+@font-face {
+    font-family: "Manrope";
+    src: url("../fonts/manrope.woff2") format("woff2");
+    font-weight: 200 800;
+}
+
+:root {
+    --ink: #121821;
+    --ink-2: #0e131a;
+    --surface: #1b2430;
+    --raised: #243042;
+    --line: #2e3b4e;
+    --text: #e8edf2;
+    --muted: #8a97a8;
+    --glass: #f0974a;
+    --brand-red: #d93b42;
+    --brand-amber: #f4b75c;
+    --brand: linear-gradient(135deg, #d93b42 0%, #e98a46 55%, #f4b75c 100%);
+    --ring: 0 0 0 0.4rem #fff, 0 1.6rem 4rem rgba(0, 0, 0, .55);
+    --safe-x: 9.6rem;
+    --safe-y: 5.4rem;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--text);
+    font-family: "Manrope", "Samsung One", "Roboto", system-ui, sans-serif;
+    font-size: 10px;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    cursor: default;
+}
+
+body {
+    font-size: 2.4rem;
+    line-height: 1.35;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    border: 0;
+    background: none;
+    padding: 0;
+    outline: none;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+.icon {
+    width: 1.2em;
+    height: 1.2em;
+    flex: none;
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.small {
+    font-size: 2rem;
+}
+
+.spacer {
+    flex: 1;
+}
+
+#video-layer {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    background: #000;
+    display: none;
+}
+
+#video-layer object, #video-layer video {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+#app {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+/* While a video plays, the page is transparent: the TV's player draws behind it. */
+body.video-mode, html.video-mode {
+    background: transparent;
+}
+
+body.video-mode #video-layer {
+    display: block;
+}
+
+body.platform-tizen.video-mode #video-layer, body.platform-android.video-mode #video-layer {
+    background: transparent;
+}
+
+body.video-mode #app > .screen, body.video-mode #app > .splash {
+    visibility: hidden;
+}
+
+/* ------------------------------------------------------------------ basics */
+
+.screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background: radial-gradient(120rem 80rem at 15% 0%, #1d2838 0%, var(--ink) 60%, var(--ink-2) 100%);
+}
+
+.screen.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel {
+    width: 92rem;
+    max-width: 90%;
+    padding: 6rem 7rem;
+    border-radius: 3.2rem;
+    background: rgba(27, 36, 48, .8);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 3rem 8rem rgba(0, 0, 0, .45);
+    display: flex;
+    flex-direction: column;
+    gap: 2.4rem;
+}
+
+.panel.wide {
+    width: 130rem;
+}
+
+.panel h1 {
+    font-size: 4.4rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.logo.big {
+    width: 11rem;
+    height: 11rem;
+}
+
+.logo.small {
+    width: 5.6rem;
+    height: 5.6rem;
+}
+
+.splash {
+    flex-direction: column;
+    gap: 4rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 2.2rem;
+    color: var(--muted);
+}
+
+.field input {
+    font: inherit;
+    font-size: 3rem;
+    color: var(--text);
+    background: rgba(255, 255, 255, .06);
+    border: 0.3rem solid transparent;
+    border-radius: 1.6rem;
+    padding: 1.8rem 2.4rem;
+    outline: none;
+    transition: border-color .15s, background .15s;
+}
+
+.field input.focused, .field input:focus {
+    border-color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+
+.msg {
+    min-height: 3.2rem;
+    color: var(--brand-amber);
+}
+
+.row-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.2rem;
+    height: 7.2rem;
+    padding: 0 3.6rem;
+    border-radius: 3.6rem;
+    background: rgba(255, 255, 255, .1);
+    font-size: 2.6rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: transform .15s var(--ease), background .15s, color .15s, box-shadow .15s;
+}
+
+.btn.primary {
+    background: var(--brand);
+    color: #1d0d05;
+}
+
+.btn.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.06);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, .4);
+}
+
+.pill {
+    display: inline-block;
+    padding: .2rem 1rem;
+    border-radius: .8rem;
+    border: 0.2rem solid rgba(255, 255, 255, .35);
+    font-size: .8em;
+    font-weight: 700;
+}
+
+.spinner {
+    width: 8rem;
+    height: 8rem;
+    border-radius: 50%;
+    border: 0.7rem solid rgba(255, 255, 255, .15);
+    border-top-color: var(--glass);
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    padding: 6rem;
+}
+
+.empty {
+    padding: 8rem var(--safe-x);
+    color: var(--muted);
+    font-size: 2.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    align-items: flex-start;
+}
+
+#toast {
+    position: fixed;
+    z-index: 50;
+    bottom: 7rem;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 120rem;
+    padding: 2rem 4rem;
+    border-radius: 2rem;
+    background: rgba(36, 48, 66, .96);
+    box-shadow: 0 2rem 6rem rgba(0, 0, 0, .5);
+    font-size: 2.6rem;
+}
+
+#toast.error {
+    background: #5a2222;
+}
+
+.hscroll, .vscroll {
+    scroll-behavior: smooth;
+}
+
+.hscroll {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.vscroll {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+/* ------------------------------------------------------------------ dialog */
+
+.dialog {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: rgba(5, 8, 12, .72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog .box {
+    min-width: 70rem;
+    max-width: 110rem;
+    padding: 5rem 6rem;
+    border-radius: 3rem;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 3.6rem;
+    font-size: 3rem;
+    box-shadow: 0 3rem 10rem rgba(0, 0, 0, .6);
+}
+
+/* ------------------------------------------------------------------ main view */
+
+.main .topbar-wrap {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 13rem;
+    padding: 3.6rem var(--safe-x) 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 3rem;
+    background: linear-gradient(to bottom, rgba(14, 19, 26, .92), rgba(14, 19, 26, 0));
+}
+
+.topbar {
+    display: flex;
+    gap: .8rem;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    height: 5.6rem;
+    padding: 0 2.4rem;
+    border-radius: 2.8rem;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: rgba(232, 237, 242, .75);
+    white-space: nowrap;
+    transition: background .15s, color .15s, transform .15s var(--ease);
+}
+
+.tab.on {
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+
+.tab.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.05);
+}
+
+.who {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 5.6rem;
+    color: var(--muted);
+    font-size: 2.2rem;
+}
+
+.main .content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tabview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* ------------------------------------------------------------------ rows and cards */
+
+.row h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    padding: 0 var(--safe-x);
+    margin-bottom: .4rem;
+}
+
+.cards {
+    display: flex;
+    gap: 2.4rem;
+    padding: 2rem var(--safe-x) 2.4rem;
+}
+
+.card {
+    flex: none;
+    position: relative;
+    transition: transform .18s var(--ease);
+}
+
+.card.poster {
+    width: 21rem;
+}
+
+.card.land {
+    width: 37rem;
+}
+
+.card .art {
+    position: relative;
+    width: 100%;
+    border-radius: 1.4rem;
+    background: var(--raised) center / cover no-repeat;
+    overflow: hidden;
+    transition: box-shadow .18s;
+}
+
+.card.poster .art {
+    padding-top: 150%;
+}
+
+.card.land .art {
+    padding-top: 56.25%;
+}
+
+.art .fallback, .d-poster .fallback, .face .fallback {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--muted);
+    background: linear-gradient(160deg, var(--raised), var(--surface));
+}
+
+.card.focused {
+    transform: scale(1.08);
+    z-index: 2;
+}
+
+.card.focused .art {
+    box-shadow: var(--ring);
+}
+
+.card .cap {
+    padding: 1.4rem .4rem 0;
+    opacity: .85;
+}
+
+.card.focused .cap {
+    opacity: 1;
+}
+
+.card .cap .t {
+    font-size: 2.2rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card .cap .s {
+    font-size: 1.9rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card .badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    min-width: 3.6rem;
+    height: 3.6rem;
+    padding: 0 1rem;
+    border-radius: 1.8rem;
+    background: var(--glass);
+    color: var(--glass-ink, #2a1306);
+    font-size: 1.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card .badge.done {
+    background: rgba(14, 19, 26, .82);
+    color: var(--glass);
+    padding: 0;
+}
+
+.card .prog {
+    position: absolute;
+    left: 1.2rem;
+    right: 1.2rem;
+    height: .6rem;
+    border-radius: .3rem;
+    background: rgba(0, 0, 0, .55);
+    overflow: hidden;
+}
+
+.card.poster .prog {
+    top: calc(21rem * 1.5 - 2rem);
+}
+
+.card.land .prog {
+    top: calc(37rem * .5625 - 2rem);
+}
+
+.card .prog i {
+    display: block;
+    height: 100%;
+    background: var(--glass);
+}
+
+/* ------------------------------------------------------------------ home */
+
+.home .hero {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.hero-art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: center / cover no-repeat;
+    opacity: 0;
+    transition: opacity .5s;
+}
+
+.hero-art.loaded {
+    opacity: 1;
+}
+
+.home .hero::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, var(--ink) 0%, rgba(18, 24, 33, .85) 30%, rgba(18, 24, 33, 0) 70%),
+    linear-gradient(to top, var(--ink) 0%, var(--ink) 38%, rgba(18, 24, 33, 0) 75%);
+}
+
+.main {
+    background: var(--ink);
+}
+
+.hero-text {
+    position: absolute;
+    z-index: 1;
+    left: var(--safe-x);
+    top: 15rem;
+    width: 90rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.hero-text h1 {
+    font-size: 6rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.05;
+}
+
+.hero-text .ep {
+    font-size: 2.8rem;
+    font-weight: 600;
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem;
+    font-size: 2.3rem;
+    color: rgba(232, 237, 242, .85);
+}
+
+.meta .dot {
+    color: var(--muted);
+}
+
+.summary {
+    font-size: 2.3rem;
+    color: rgba(232, 237, 242, .85);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.home .rows {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 50vh;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 44%, #000 49%);
+    mask-image: linear-gradient(to bottom, transparent 0, transparent 44%, #000 49%);
+}
+
+.home .rows-end {
+    height: 60vh;
+}
+
+/* ------------------------------------------------------------------ library */
+
+.library .lib-head {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 13rem;
+    padding: 0 var(--safe-x);
+    display: flex;
+    align-items: center;
+    gap: 2.4rem;
+    z-index: 2;
+}
+
+.library .lib-head h1 {
+    font-size: 4.4rem;
+    font-weight: 800;
+}
+
+.library .lib-head .btn {
+    height: 6rem;
+    font-size: 2.3rem;
+    padding: 0 2.8rem;
+}
+
+.lib-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 22rem;
+    bottom: 0;
+}
+
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3.6rem 2.6rem;
+    padding: 2rem var(--safe-x) 12rem;
+}
+
+.grid .empty {
+    padding-left: 0;
+}
+
+/* ------------------------------------------------------------------ search */
+
+.search .search-head {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 13rem;
+    padding: 0 var(--safe-x);
+}
+
+.search .search-head .field {
+    width: 90rem;
+}
+
+.search .rows {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 30rem;
+    bottom: 0;
+}
+
+.search .row {
+    margin-bottom: 2rem;
+}
+
+/* ------------------------------------------------------------------ settings */
+
+.settings {
+    overflow: hidden;
+}
+
+.settings-body {
+    padding: 15rem var(--safe-x) 8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.6rem;
+    max-width: 150rem;
+}
+
+.settings-body h1 {
+    font-size: 4.4rem;
+    font-weight: 800;
+}
+
+.card-box {
+    padding: 3.6rem 4.4rem;
+    border-radius: 2.4rem;
+    background: rgba(27, 36, 48, .8);
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+}
+
+.kv {
+    display: flex;
+    gap: 3rem;
+}
+
+.kv span {
+    width: 30rem;
+    color: var(--muted);
+}
+
+.about {
+    font-size: 2rem;
+    line-height: 1.6;
+}
+
+.users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3rem;
+}
+
+.user {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+    width: 20rem;
+    padding: 2rem;
+    border-radius: 2.4rem;
+    transition: background .15s, transform .15s var(--ease);
+}
+
+.user .avatar {
+    width: 12rem;
+    height: 12rem;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #1d0d05;
+    font-size: 5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user.focused {
+    background: rgba(255, 255, 255, .12);
+    transform: scale(1.06);
+}
+
+/* ------------------------------------------------------------------ details */
+
+.details .backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: center / cover no-repeat;
+    opacity: 0;
+    transition: opacity .5s;
+}
+
+.details .backdrop.loaded {
+    opacity: .9;
+}
+
+.details .shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, rgba(18, 24, 33, .97) 0%, rgba(18, 24, 33, .88) 40%, rgba(18, 24, 33, .35) 100%),
+    linear-gradient(to top, var(--ink) 0%, rgba(18, 24, 33, 0) 60%);
+}
+
+.details-body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10rem 0 14rem;
+}
+
+.d-head {
+    display: flex;
+    gap: 6rem;
+    padding: 0 var(--safe-x) 4rem;
+    align-items: flex-start;
+}
+
+.d-poster {
+    position: relative;
+    flex: none;
+    width: 30rem;
+    height: 45rem;
+    border-radius: 2rem;
+    background: var(--raised) center / cover no-repeat;
+    box-shadow: 0 3rem 8rem rgba(0, 0, 0, .5);
+    overflow: hidden;
+}
+
+.d-poster.land {
+    width: 56rem;
+    height: 31.5rem;
+}
+
+.d-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    min-width: 0;
+}
+
+.d-text > .summary, .d-text > .tagline, .d-text > .genres {
+    max-width: 110rem;
+}
+
+.d-text h1 {
+    font-size: 6rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.05;
+}
+
+.d-text .kicker {
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--brand-amber);
+}
+
+.d-text .ep, .d-text .tagline {
+    font-size: 2.6rem;
+    color: rgba(232, 237, 242, .85);
+}
+
+.d-text .summary {
+    -webkit-line-clamp: 5;
+}
+
+.d-text .credits, .d-text .tech, .d-text .genres {
+    font-size: 2.1rem;
+}
+
+.d-text .actions {
+    margin-top: 2rem;
+    flex-wrap: nowrap;
+}
+
+.d-text .actions .btn {
+    height: 6.4rem;
+    padding: 0 3rem;
+    font-size: 2.4rem;
+}
+
+.details .row {
+    margin-bottom: 2rem;
+}
+
+.season-tabs {
+    display: flex;
+    gap: 1.6rem;
+    padding: 1.6rem var(--safe-x) 2rem;
+}
+
+.pill-btn {
+    flex: none;
+    height: 6rem;
+    padding: 0 3rem;
+    border-radius: 3rem;
+    background: rgba(255, 255, 255, .08);
+    font-size: 2.4rem;
+    font-weight: 600;
+    transition: background .15s, transform .15s var(--ease), color .15s;
+}
+
+.pill-btn.on {
+    background: rgba(240, 151, 74, .25);
+    color: #ffd7b0;
+}
+
+.pill-btn.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.06);
+}
+
+.people .person {
+    flex: none;
+    width: 17rem;
+    text-align: center;
+    transition: transform .15s var(--ease);
+}
+
+.person .face {
+    position: relative;
+    width: 15rem;
+    height: 15rem;
+    margin: 0 auto 1.2rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--raised) center / cover no-repeat;
+}
+
+.person .face .fallback {
+    font-size: 5rem;
+}
+
+.person .t {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.person .s {
+    font-size: 1.8rem;
+    color: var(--muted);
+}
+
+.person.focused {
+    transform: scale(1.08);
+}
+
+.person.focused .face {
+    box-shadow: var(--ring);
+}
+
+/* ------------------------------------------------------------------ player */
+
+.player {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: transparent;
+}
+
+.player > .spinner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -4rem 0 0 -4rem;
+}
+
+.osd {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity .25s;
+    pointer-events: none;
+}
+
+.osd.on {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.osd-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    padding: var(--safe-y) var(--safe-x) 10rem;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, .75), rgba(0, 0, 0, 0));
+}
+
+.p-title {
+    font-size: 4.4rem;
+    font-weight: 800;
+}
+
+.p-sub {
+    font-size: 2.6rem;
+    color: rgba(255, 255, 255, .8);
+}
+
+.osd-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14rem var(--safe-x) var(--safe-y);
+    background: linear-gradient(to top, rgba(0, 0, 0, .85), rgba(0, 0, 0, 0));
+}
+
+.seek {
+    position: relative;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+}
+
+.seek .bar {
+    position: relative;
+    width: 100%;
+    height: .8rem;
+    border-radius: .4rem;
+    background: rgba(255, 255, 255, .25);
+    transition: height .15s;
+}
+
+.seek.focused .bar {
+    height: 1.2rem;
+}
+
+.seek .fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: .4rem;
+    background: var(--brand);
+}
+
+.seek .marks i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: .4rem;
+    margin-left: -.2rem;
+    background: rgba(0, 0, 0, .6);
+}
+
+.seek .knob {
+    position: absolute;
+    top: 50%;
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: -1.2rem 0 0 -1.2rem;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.seek.focused .knob {
+    opacity: 1;
+    box-shadow: 0 0 0 .6rem rgba(255, 255, 255, .25);
+}
+
+.preview {
+    position: absolute;
+    bottom: 5rem;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pv-img {
+    border-radius: 1.2rem;
+    border: .3rem solid #fff;
+    background: #000 no-repeat;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, .6);
+}
+
+.pv-time {
+    font-size: 2.8rem;
+    font-weight: 700;
+    padding: .4rem 1.6rem;
+    border-radius: 1rem;
+    background: rgba(0, 0, 0, .7);
+}
+
+.times {
+    display: flex;
+    gap: 2.4rem;
+    margin-top: 1rem;
+    font-size: 2.2rem;
+    color: rgba(255, 255, 255, .85);
+    font-variant-numeric: tabular-nums;
+}
+
+.times .ends {
+    flex: 1;
+    text-align: center;
+    color: rgba(255, 255, 255, .6);
+}
+
+.p-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    margin-top: 2.4rem;
+}
+
+.p-btn {
+    position: relative;
+    width: 7.2rem;
+    height: 7.2rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, transform .15s var(--ease), color .15s;
+}
+
+.p-btn .icon {
+    width: 3.6rem;
+    height: 3.6rem;
+}
+
+.p-btn.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.1);
+}
+
+.p-btn .tip {
+    position: absolute;
+    bottom: 9rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: .6rem 1.4rem;
+    border-radius: 1rem;
+    background: rgba(0, 0, 0, .8);
+    color: #fff;
+    font-size: 2rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.p-btn.focused .tip {
+    opacity: 1;
+}
+
+.p-info {
+    margin-top: 1.6rem;
+    font-size: 1.8rem;
+    color: rgba(255, 255, 255, .5);
+}
+
+.skip-btn {
+    position: absolute;
+    right: var(--safe-x);
+    bottom: 22rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    height: 7.2rem;
+    padding: 0 3.6rem;
+    border-radius: 1.6rem;
+    background: rgba(20, 26, 35, .85);
+    border: .3rem solid rgba(255, 255, 255, .5);
+    font-size: 2.6rem;
+    font-weight: 700;
+    transition: transform .15s var(--ease), background .15s, color .15s;
+}
+
+.skip-btn.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.06);
+    border-color: #fff;
+}
+
+.up-next {
+    position: absolute;
+    right: var(--safe-x);
+    bottom: var(--safe-y);
+}
+
+.up-next .card {
+    display: flex;
+    gap: 3rem;
+    width: 90rem;
+    padding: 2.4rem;
+    border-radius: 2.4rem;
+    background: rgba(20, 26, 35, .94);
+    box-shadow: 0 2rem 6rem rgba(0, 0, 0, .6);
+}
+
+.up-next .art {
+    flex: none;
+    width: 32rem;
+    height: 18rem;
+    border-radius: 1.4rem;
+    background: var(--raised) center / cover no-repeat;
+}
+
+.up-next .txt {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    justify-content: center;
+}
+
+.up-next .count {
+    color: var(--brand-amber);
+    font-weight: 700;
+}
+
+.up-next .t {
+    font-size: 2.6rem;
+    font-weight: 700;
+}
+
+.up-next .btn {
+    height: 6rem;
+    padding: 0 2.8rem;
+    font-size: 2.3rem;
+}
+
+.p-notice {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100rem;
+    padding: 5rem;
+    border-radius: 3rem;
+    background: rgba(20, 26, 35, .95);
+    font-size: 2.8rem;
+}
+
+.p-notice .row-buttons {
+    margin-top: 3rem;
+}
+
+.menu-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    background: rgba(0, 0, 0, .35);
+}
+
+.menu-layer .sheet {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 68rem;
+    padding: var(--safe-y) 5rem;
+    background: rgba(20, 26, 35, .97);
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+}
+
+.menu-layer h3 {
+    font-size: 3.4rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    min-height: 6.8rem;
+    padding: 1rem 2.4rem;
+    border-radius: 1.4rem;
+    text-align: left;
+    font-size: 2.5rem;
+    flex: none;
+}
+
+.menu-item .mark {
+    width: 3rem;
+    color: var(--glass);
+}
+
+.menu-item.focused {
+    background: #fff;
+    color: var(--ink);
+}
+
+.menu-item.focused .mark {
+    color: var(--ink);
+}
+
+/* Subtitles, styled as chosen in FreeX Web. */
+.subtitles {
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: 8%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .2em;
+    font-size: 4.2rem;
+    font-weight: 600;
+    text-align: center;
+    pointer-events: none;
+    transition: bottom .25s;
+}
+
+.subtitles span {
+    padding: .05em .35em;
+    border-radius: .2em;
+    line-height: 1.25;
+}
+
+.subtitles.style-box span {
+    background: rgba(0, 0, 0, .72);
+}
+
+.subtitles.style-outline span {
+    text-shadow: 0 0 .12em #000, 0 0 .12em #000, .06em .06em .1em #000, -.06em -.06em .1em #000;
+}
+
+.subtitles.style-s {
+    font-size: 3.4rem;
+}
+
+.subtitles.style-l {
+    font-size: 5rem;
+}
+
+.subtitles.style-xl {
+    font-size: 6rem;
+}
+
+.subtitles.style-high {
+    bottom: 16%;
+}
+
+.subtitles.style-yellow {
+    color: #ffe14a;
+}
+
+.player.osd-on .subtitles {
+    bottom: 30%;
+}
+
+/* ------------------------------------------------------------------ older TVs */
+
+/*
+ * Samsung TVs before 2021 run Chromium 56–76, which knows no gap in flex boxes (app.js sets
+ * "no-gap" there). Margins do the same job.
+ */
+.no-gap .row-buttons > *, .no-gap .meta > *, .no-gap .topbar > *, .no-gap .cards > *, .no-gap .season-tabs > *,
+.no-gap .p-buttons > *, .no-gap .times > *, .no-gap .lib-head > *, .no-gap .kv > *, .no-gap .topbar-wrap > *,
+.no-gap .d-head > *, .no-gap .up-next .card > * {
+    margin-right: 2rem;
+}
+
+.no-gap .meta > * {
+    margin-right: 1.2rem;
+}
+
+.no-gap .topbar > *, .no-gap .p-buttons > * {
+    margin-right: 1.2rem;
+}
+
+.no-gap .d-head > * {
+    margin-right: 6rem;
+}
+
+.no-gap .btn > * + *, .no-gap .tab > * + *, .no-gap .who > * + *, .no-gap .skip-btn > * + *, .no-gap .menu-item > * + * {
+    margin-left: 1.2rem;
+}
+
+.no-gap .panel > * + *, .no-gap .dialog .box > * + *, .no-gap .settings-body > * + *, .no-gap .d-text > * + *,
+.no-gap .hero-text > * + *, .no-gap .card-box > * + *, .no-gap .up-next .txt > * + *, .no-gap .field > * + *,
+.no-gap .splash > * + *, .no-gap .user > * + *, .no-gap .preview > * + *, .no-gap .subtitles > * + * {
+    margin-top: 1.6rem;
+}
+
+.no-gap .panel > * + * {
+    margin-top: 2.4rem;
+}
+
+.no-gap .menu-layer .sheet > * + * {
+    margin-top: .8rem;
+}
+
+.no-gap .grid > * {
+    margin: 0 2.6rem 3.6rem 0;
+}
+
+.no-gap .users > * {
+    margin: 0 3rem 3rem 0;
+}
+
+.no-gap .row-buttons > * {
+    margin-bottom: 1rem;
+}
