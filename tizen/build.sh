@@ -13,6 +13,7 @@
 # Builds FreeX TV for Samsung TVs:
 #   build/tizen/                    the Tizen web project (shared web client + config.xml)
 #   build/FreeX-TV-Tizen-<v>.zip    the same as an archive, to import into Tizen Studio
+#                                   (File → Import → Tizen → Tizen Project → Archive file)
 #   build/FreeX.wgt                 the signed package, if the Tizen CLI is installed
 #
 # Signing needs a certificate profile from Tizen Studio's Certificate Manager (a Samsung
@@ -33,6 +34,9 @@ cp -R "$ROOT/web/." "$APP/"
 rm -f "$APP/blank.html"
 cp "$HERE/icon.png" "$APP/icon.png"
 sed "s/@VERSION@/$VERSION/" "$HERE/config.xml" > "$APP/config.xml"
+# Project files, so that Tizen Studio can import the folder or the archive (File → Import → Tizen Project).
+cp "$HERE/project.xml" "$APP/.project"
+cp "$HERE/tproject.xml" "$APP/.tproject"
 # Samsung's device APIs (AVPlay, product info) come from a script the TV provides.
 sed -i.bak 's#<script src="vendor/hls.min.js"></script>#<script src="$WEBAPIS/webapis/webapis.js"></script>\n<script src="vendor/hls.min.js"></script>#' "$APP/index.html"
 rm -f "$APP/index.html.bak"
