@@ -37,6 +37,13 @@ pipeline {
     }
 
     stages {
+        stage('Prepare') {
+            steps {
+                // The workspace stays between builds: only this build's files go into dist/.
+                sh 'rm -rf dist build && mkdir -p dist'
+            }
+        }
+
         stage('Android') {
             steps {
                 dir('android') {
