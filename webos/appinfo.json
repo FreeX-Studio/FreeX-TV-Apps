@@ -1,0 +1,18 @@
+{
+    "id": "de.mirranet.freex.tv",
+    "version": "@VERSION@",
+    "vendor": "MirraNET",
+    "type": "web",
+    "main": "index.html",
+    "title": "FreeX",
+    "appDescription": "FreeX TV – the TV app for FreeX Media Server",
+    "icon": "icon.png",
+    "largeIcon": "largeIcon.png",
+    "splashBackground": "splash.png",
+    "bgColor": "#121821",
+    "iconColor": "#121821",
+    "resolution": "1920x1080",
+    "transparent": false,
+    "disableBackHistoryAPI": true,
+    "handlesRelaunch": false
+}

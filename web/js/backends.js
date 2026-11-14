@@ -17,6 +17,8 @@
  *    directly and draws the picture behind the page.
  *  - Android TV / Fire TV: ExoPlayer (Media3) in the app around the page, reached through the
  *    bridge object FreeXNative; it also draws behind the page.
+ *  - LG (webOS 5+, TVs from 2020): <video>, which webOS hands to the TV's media pipeline, so it
+ *    plays MKV, HEVC and Dolby sound directly; conversions through hls.js.
  *  - Any browser (for development, and as fallback on Tizen): <video> with hls.js.
  *
  * Every backend has the same shape: open(url, {hls, startMs, uhd}) → Promise, play(), pause(),
@@ -28,7 +30,8 @@
 
     const isTizen = typeof window.tizen === "object" && typeof window.webapis === "object" && !!window.webapis.avplay;
     const isAndroid = typeof window.FreeXNative === "object" && window.FreeXNative !== null;
-    const platform = isTizen ? "tizen" : isAndroid ? "android" : "html";
+    const isWebOS = !isTizen && !isAndroid && (typeof window.PalmSystem === "object" || /Web0S|webOS/.test(navigator.userAgent));
+    const platform = isTizen ? "tizen" : isAndroid ? "android" : isWebOS ? "webos" : "html";
 
     // ------------------------------------------------------------------ capabilities
 
@@ -79,6 +82,43 @@
         };
     }
 
+    /**
+     * LG TVs: the <video> element plays through the TV's media pipeline. MKV, TS and MP4, H.264
+     * and HEVC everywhere, VP9/AV1 where the engine reports it; Dolby sound always, DTS only on
+     * models that report it (LG left it out from 2020 to 2022).
+     */
+    function webosCaps() {
+        const b = browserCaps();
+        const v = document.createElement("video");
+        const can = (type) => v.canPlayType(type) !== "";
+        const video = ["h264", "hevc", "mpeg2video", "mpeg4"];
+        if (b.video.indexOf("vp9") >= 0) video.push("vp9");
+        if (b.video.indexOf("av1") >= 0) video.push("av1");
+        const audio = ["aac", "mp3", "ac3", "eac3", "flac", "opus", "vorbis", "mp2", "pcm_s16le", "pcm_s24le"];
+        if (can('audio/mp4; codecs="dtsc"') || can("audio/vnd.dts")) audio.push("dts");
+        return {
+            containers: ["mp4", "mkv", "webm", "mpegts", "ts", "mov"],
+            video, audio,
+            // Conversions run through hls.js (Media Source): only what the engine reports there.
+            mseVideo: mseList({h264: 'video/mp4; codecs="avc1.640028"', hevc: 'video/mp4; codecs="hvc1.1.6.L120.90"',
+                av1: 'video/mp4; codecs="av01.0.08M.08"'}),
+            mseAudio: mseList({aac: 'audio/mp4; codecs="mp4a.40.2"', mp3: 'audio/mpeg', ac3: 'audio/mp4; codecs="ac-3"',
+                eac3: 'audio/mp4; codecs="ec-3"'}),
+        };
+    }
+
+    function mseList(types) {
+        const out = [];
+        for (const k in types) {
+            try {
+                if (window.MediaSource && MediaSource.isTypeSupported(types[k])) out.push(k);
+            } catch (e) {
+                // not supported
+            }
+        }
+        return out;
+    }
+
     function caps(directPlay) {
         let c;
         if (isAndroid) {
@@ -89,6 +129,8 @@
             }
         } else if (isTizen) {
             c = tizenCaps();
+        } else if (isWebOS) {
+            c = webosCaps();
         } else {
             c = browserCaps();
         }
@@ -100,6 +142,7 @@
     function deviceName() {
         try {
             if (isAndroid) return window.FreeXNative.deviceName();
+            if (isWebOS) return "LG TV";
             if (isTizen) {
                 const model = window.webapis.productinfo && window.webapis.productinfo.getRealModel ? window.webapis.productinfo.getRealModel() : "";
                 return "Samsung TV" + (model ? " " + model : "");
@@ -114,6 +157,7 @@
         try {
             if (isTizen) return window.tizen.application.getCurrentApplication().exit();
             if (isAndroid) return window.FreeXNative.exit();
+            if (isWebOS && window.webOS && window.webOS.platformBack) return window.webOS.platformBack();
         } catch (e) {
             // nothing to close in a browser
         }
@@ -165,7 +209,7 @@
                     const start = (o.startMs || 0) / 1000;
                     const done = () => {
                         v.removeEventListener("loadedmetadata", done);
-                        if (!o.hls && start > 0) v.currentTime = start;
+                        if (!hls && start > 0) v.currentTime = start;
                         resolve();
                     };
                     v.addEventListener("loadedmetadata", done);
@@ -436,5 +480,5 @@
         return HtmlBackend(onEvent);
     }
 
-    window.FreeXPlatform = {platform, caps, deviceName, exitApp, registerKeys, createBackend, isTizen, isAndroid};
+    window.FreeXPlatform = {platform, caps, deviceName, exitApp, registerKeys, createBackend, isTizen, isAndroid, isWebOS};
 })();

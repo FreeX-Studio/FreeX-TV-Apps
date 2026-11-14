@@ -1,5 +1,13 @@
 # Changelog
 
+## FreeX TV 1.1.0
+
+- **LG TVs (webOS 5 and newer, models from 2020):** the shared interface as a webOS app (`.ipk`, `webos/build.sh`).
+  Videos play in the TV's media pipeline, so MKV, HEVC, HDR and Dolby sound play directly; conversions run
+  through hls.js with the codecs the TV reports for them
+- Pointing with LG's Magic Remote (or a mouse) focuses buttons and cards
+- Samsung: the Tizen archive contains the project files, so Tizen Studio can import it
+
 ## FreeX TV 1.0.0
 
 First version of the TV apps for FreeX Media Server, for **Samsung Smart TVs** (Tizen 4.0+) and **Fire TV /

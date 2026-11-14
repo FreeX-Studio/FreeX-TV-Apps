@@ -1,5 +1,5 @@
-# Builds FreeX TV: the Android TV / Fire TV APK and the Samsung (Tizen) project. On a tag v*,
-# both are attached to a GitHub release.
+# Builds FreeX TV: the Android TV / Fire TV APK, the Samsung (Tizen) project and the LG (webOS)
+# package. On a tag v*, all are attached to a GitHub release.
 name: Build
 
 on:
@@ -80,11 +80,27 @@ jobs:
           name: freex-tv-tizen
           path: build/FreeX-TV-Tizen-*.zip
 
+  webos:
+    name: LG (webOS)
+    runs-on: ubuntu-latest
+    needs: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        run: webos/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: freex-tv-webos
+          path: build/*.ipk
+
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs: [android, tizen]
+    needs: [android, tizen, webos]
     steps:
       - uses: actions/download-artifact@v4
         with:

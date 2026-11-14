@@ -290,6 +290,13 @@
 
     document.addEventListener("keydown", onKeyDown, true);
 
+    // LG's Magic Remote and mice: pointing at an element focuses it.
+    document.addEventListener("mouseover", (ev) => {
+        const el = ev.target.closest && ev.target.closest(".f");
+        const layer = top();
+        if (el && el !== focused && layer && layer.el.contains(el)) focus(el, {noScroll: true});
+    }, true);
+
     // A click (mouse, or Android's pointer on emulators) focuses and activates like the remote.
     document.addEventListener("click", (ev) => {
         const el = ev.target.closest && ev.target.closest(".f");

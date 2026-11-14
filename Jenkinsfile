@@ -10,11 +10,12 @@
  * or contact: niklas.linz@mirranet.de
  */
 
-// FreeX TV: the Android TV / Fire TV APK and the Samsung (Tizen) project.
+// FreeX TV: the Android TV / Fire TV APK, the Samsung (Tizen) project and the LG (webOS) package.
 //
 // The build agent needs JDK 17 or 21 (Gradle 8.14 does not run on Java 25; FREEX_JDK names the JDK
 // if it is not under /usr/lib/jvm), the Android SDK (ANDROID_HOME, platform 35 and build tools; the
-// Gradle wrapper fetches everything else) and zip. With the Tizen CLI (tizen in PATH or
+// Gradle wrapper fetches everything else), zip, and Node.js for the LG package (the webOS CLI
+// comes through npx). With the Tizen CLI (tizen in PATH or
 // ~/tizen-studio) and a certificate profile named in TIZEN_PROFILE it also signs FreeX.wgt.
 // The Android SDK once, as the Jenkins user (the command line tools from developer.android.com):
 //
@@ -69,6 +70,15 @@ pipeline {
                     VERSION=$(sed -n 's/.*"version": *"\\([^"]*\\)".*/\\1/p' web/version.json)
                     mkdir -p dist
                     cp android/app/build/outputs/apk/release/app-release.apk "dist/FreeX-TV-Android-$VERSION.apk"
+                '''
+            }
+        }
+
+        stage('LG webOS') {
+            steps {
+                sh '''
+                    webos/build.sh
+                    if ls build/*.ipk >/dev/null 2>&1; then cp build/*.ipk dist/; fi
                 '''
             }
         }
