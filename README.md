@@ -13,7 +13,16 @@ FreeX TV brings your FreeX library to the big screen: the home screen with *Cont
 *Recently added*, your libraries, the watchlist and search, detail pages with seasons and episodes, and a player
 made for the remote, with seek previews, Skip intro, *Next episode*, subtitles, audio tracks and quality.
 
-Both apps share one interface (`web/`). Videos are played by the device's own player, so most files play directly,
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="Home screen" width="49%">
+  <img src="docs/screenshots/show.png" alt="Show with seasons and episodes" width="49%">
+  <img src="docs/screenshots/player.png" alt="Player while seeking, with a preview" width="49%">
+  <img src="docs/screenshots/library.png" alt="Library" width="49%">
+</p>
+
+<p align="center"><em>Home, show page, player while seeking, library (1920 × 1080; test library)</em></p>
+
+All apps share one interface (`web/`). Videos are played by the device's own player, so most files play directly,
 without conversion on the server:
 
 | Platform | Interface | Player | Plays directly |
