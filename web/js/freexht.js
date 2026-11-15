@@ -413,7 +413,8 @@
 
     // ------------------------------------------------------------------ settings
 
-    /** FreeX Desktop in the TV mode: leave it, quit, and start in it at login. */
+    /** FreeX Desktop in the TV mode: leave it, its own settings window (player, server, …),
+     *  quit, and start in it at login. */
     function desktopSection() {
         const info = N.info();
         const kv = (k, v) => h("div", {class: "kv"}, h("span", null, k), v);
@@ -435,6 +436,8 @@
             h("div", {class: "card-box"}, kv(t("Version"), h("b", null, info.version))),
             h("div", {class: "row-buttons"},
                 btn(t("Leave TV mode"), () => N.call("tv.leave").catch((e) => FX.toast(e.message)), {icon: "exit"}),
+                // FreeX Desktop's own settings (stored in the app on the PC), above the TV mode.
+                btn(t("App settings"), () => N.call("app.settings").catch((e) => FX.toast(e.message))),
                 autoBtn,
                 btn(t("Quit FreeX"), () => N.call("app.quit").catch((e) => FX.toast(e.message)))));
     }

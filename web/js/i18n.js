@@ -155,6 +155,7 @@
         "Wi-Fi is not available: {0}": "WLAN ist nicht verfügbar: {0}",
         "Wi-Fi “{0}”": "WLAN „{0}“",
         "FreeX Desktop": "FreeX Desktop",
+        "App settings": "App-Einstellungen",
         "Leave TV mode": "TV-Modus beenden",
         "On": "An",
         "Quit FreeX": "FreeX beenden",

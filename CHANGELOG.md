@@ -12,8 +12,9 @@
 - Keys a browser knows only by name (Back, Select, media keys) work as remote keys on FreeXHT
 - FreeXHT on weak boards (Raspberry Pi 3, or `lite_ui` in freexht.conf): no transitions or animations
 - The TV mode of FreeX Desktop (Windows, Linux, macOS) uses the same bridge (`shell: "desktop"`): its settings show
-  leaving the TV mode, quitting and *Start in TV mode at login*; Back on the home screen offers closing FreeX or
-  leaving the TV mode
+  leaving the TV mode, quitting, *Start in TV mode at login* and *App settings* (FreeX Desktop's own settings
+  window: player, server, …, stored in the app on the PC); Back on the home screen offers closing FreeX or leaving
+  the TV mode
 
 ## FreeX TV 1.1.0
 

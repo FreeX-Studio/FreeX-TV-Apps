@@ -5,7 +5,7 @@
 <h1 align="center">FreeX TV</h1>
 
 <p align="center">
-  <strong>The TV apps for <a href="https://github.com/FreeX-Studio/freex-media-server">FreeX Media Server</a>:
+  <strong>The TV apps for <a href="https://github.com/FreeX-Studio/Freex-Media-Server">FreeX Media Server</a>:
   Samsung Smart TVs (Tizen), LG TVs (webOS) and Fire TV / Android TV.</strong>
 </p>
 
@@ -37,7 +37,7 @@ Whatever the device cannot decode, the server converts on the fly, as for FreeX 
 ## Requirements
 
 - **FreeX Media Server with the TV API**: CORS for apps and stream URLs with an access token
-  ([freex-media-server#2](https://github.com/FreeX-Studio/freex-media-server/pull/2), in the release after 0.21.0).
+  ([freex-media-server#2](https://github.com/FreeX-Studio/Freex-Media-Server/pull/2), in the release after 0.21.0).
   Older servers answer the app's requests with "cross-site" errors.
 - The TV and the server in the same network, or the server reachable from the internet (HTTPS through a reverse
   proxy works too).
