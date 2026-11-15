@@ -30,6 +30,7 @@ without conversion on the server:
 | **Samsung Smart TV** (Tizen 4.0+, models from 2018) | packaged web app | **AVPlay**, the TV's player | MKV, MP4, TS, AVI; H.264, HEVC (also 10-bit and HDR), VP9/AV1 where the TV has the decoder; AAC, MP3, Dolby Digital (Plus), FLAC, DTS where supported |
 | **LG TV** (webOS 5+, models from 2020) | packaged web app | the TV's media pipeline through `<video>` | MKV, MP4, TS; H.264, HEVC (also 10-bit and HDR), VP9/AV1 where the TV has the decoder; AAC, MP3, Dolby Digital (Plus), FLAC, DTS where supported |
 | **Fire TV / Android TV** (Fire OS 5 / Android 5.1+) | WebView with the same interface | **ExoPlayer** (Media3) | what the device's decoders report (checked at runtime), Dolby/DTS as passthrough to the TV or receiver |
+| **FreeXHT** (Raspberry Pi 3/4/5, PCs) | the system image of [FreeX-HT](https://github.com/FreeX-Studio/FreeX-HT): the interface in cog (WPE WebKit) | **mpv** | H.264 everywhere; HEVC (also 10-bit) on the Pi 4/5 and PCs; every sound format |
 
 Whatever the device cannot decode, the server converts on the fly, as for FreeX Web.
 
@@ -106,7 +107,7 @@ LG TVs install your own apps in developer mode, without a certificate:
 |---|---|---|
 | Arrows | move | ← → jump 10 s back / forward (faster when held), ↑ ↓ show the controls |
 | OK | open, choose | pause / play; *Skip intro* when it is shown |
-| Back | back; on the home screen to the menu bar, then *Close FreeX?* | hide the controls, then close the player |
+| Back | back; on the home screen to the menu bar, then *Close FreeX?* (FreeXHT: switch off / restart) | hide the controls, then close the player |
 | ⏯ ⏪ ⏩ ⏹ | – | play/pause, −10 s, +30 s, close |
 | Magic Remote pointer (LG) | points at buttons and cards; OK clicks | the same on the controls |
 | ⏭ | – | next episode |
@@ -123,11 +124,14 @@ user's settings in FreeX Web.
 │ player.js   controls, subtitles, Skip intro,   │  ──  /api (JSON, token in X-FreeX-Token)
 │             progress reports                   │      /api/cast/{token}/…  stream URLs with
 │ nav.js      remote keys, spatial navigation    │      their own token for native players
-│ backends.js AVPlay │ ExoPlayer │ <video> (LG) │
+│ backends.js AVPlay │ ExoPlayer/mpv │ <video> │
+│ freexht.js  FreeXHT only: on-screen keyboard,  │
+│             network, power                     │
 └────────────────────────────────────────────────┘
       │ Samsung: packaged Tizen app (tizen/)
       │ LG: packaged webOS app (webos/)
       │ Android: WebView + ExoPlayer under it (android/)
+      │ FreeXHT: cog + mpv under it, own repository (FreeX-HT)
 ```
 
 - The interface runs from the app itself, not from the server. It calls the API across origins with the sign-in
@@ -137,6 +141,10 @@ user's settings in FreeX Web.
   The answer is a URL with its own access token for the file or the HLS conversion, which the native players load
   without headers.
 - Picture subtitles (PGS, VobSub) are burned in by the server; text subtitles are drawn by the app.
+- **FreeXHT** packages `web/` into its system image. Its agent serves the interface on `127.0.0.1` and adds a
+  bridge (`window.FreeXNative`, the same calls as the Android app's) that drives mpv. `web/js/freexht.js` adds what a
+  TV brings itself and a bare box does not: an on-screen keyboard, Wi-Fi set-up, restart and switch off. On other
+  platforms it does nothing.
 
 ## Building
 
@@ -161,6 +169,7 @@ is derived from it.
 | `tizen/` | `config.xml`, the app icon and `build.sh` for Samsung TVs |
 | `webos/` | `appinfo.json`, icons, splash screen and `build.sh` for LG TVs |
 | `android/` | The Android app (Kotlin): `MainActivity` (WebView, keys), `NativePlayer` (ExoPlayer), `Bridge` (`FreeXNative` for the page, device capabilities) |
+| (FreeX-HT) | The FreeXHT system image for Raspberry Pi and PCs builds a package from `web/`; see that repository |
 
 ## License
 

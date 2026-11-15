@@ -1,5 +1,16 @@
 # Changelog
 
+## FreeX TV 1.2.0
+
+- **FreeXHT**, the FreeX system image for Raspberry Pi 3/4/5 and PCs ([FreeX-HT](https://github.com/FreeX-Studio/FreeX-HT)):
+  the interface knows the platform `freexht` and plays through mpv with the same bridge as the Android app
+  (`FreeXNative`); the page is transparent over the video like on Samsung and Android
+- On FreeXHT only (`web/js/freexht.js`): an on-screen keyboard for the remote (letters, symbols, shift; a USB
+  keyboard types directly), the box in the settings (model, network, name), a network screen with Wi-Fi search and
+  sign-in, restart and switch off; Back on the home screen offers switching off instead of closing the app; the server
+  address can come from `freexht.conf`
+- Keys a browser knows only by name (Back, Select, media keys) work as remote keys on FreeXHT
+
 ## FreeX TV 1.1.0
 
 - **LG TVs (webOS 5 and newer, models from 2020):** the shared interface as a webOS app (`.ipk`, `webos/build.sh`).

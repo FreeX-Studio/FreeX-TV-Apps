@@ -177,7 +177,7 @@
                 h("img", {class: "logo big", src: "img/logo.svg", alt: ""}),
                 h("h1", null, FX.t("{0} cannot be reached", FX.S.serverName || FX.S.server)),
                 h("p", {class: "muted"}, e.message + " · " + FX.S.server),
-                h("div", {class: "row-buttons"}, retry, change))),
+                h("div", {class: "row-buttons"}, retry, change, window.FreeXHT ? window.FreeXHT.networkButton() : null))),
             initial: retry,
             onBack: exit,
         };

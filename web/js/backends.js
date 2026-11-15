@@ -19,6 +19,8 @@
  *    bridge object FreeXNative; it also draws behind the page.
  *  - LG (webOS 5+, TVs from 2020): <video>, which webOS hands to the TV's media pipeline, so it
  *    plays MKV, HEVC and Dolby sound directly; conversions through hls.js.
+ *  - FreeXHT (the FreeX system image for Raspberry Pi and PCs): mpv in its own window behind the
+ *    page, reached through the same bridge object FreeXNative as on Android (FreeX-HT repository).
  *  - Any browser (for development, and as fallback on Tizen): <video> with hls.js.
  *
  * Every backend has the same shape: open(url, {hls, startMs, uhd}) → Promise, play(), pause(),
@@ -29,9 +31,11 @@
     "use strict";
 
     const isTizen = typeof window.tizen === "object" && typeof window.webapis === "object" && !!window.webapis.avplay;
-    const isAndroid = typeof window.FreeXNative === "object" && window.FreeXNative !== null;
-    const isWebOS = !isTizen && !isAndroid && (typeof window.PalmSystem === "object" || /Web0S|webOS/.test(navigator.userAgent));
-    const platform = isTizen ? "tizen" : isAndroid ? "android" : isWebOS ? "webos" : "html";
+    const native = typeof window.FreeXNative === "object" && window.FreeXNative !== null ? window.FreeXNative : null;
+    const isFreeXHT = !!native && native.platform === "freexht";
+    const isAndroid = !!native && !isFreeXHT;
+    const isWebOS = !isTizen && !native && (typeof window.PalmSystem === "object" || /Web0S|webOS/.test(navigator.userAgent));
+    const platform = isTizen ? "tizen" : isAndroid ? "android" : isFreeXHT ? "freexht" : isWebOS ? "webos" : "html";
 
     // ------------------------------------------------------------------ capabilities
 
@@ -121,9 +125,9 @@
 
     function caps(directPlay) {
         let c;
-        if (isAndroid) {
+        if (native) {
             try {
-                c = JSON.parse(window.FreeXNative.capabilities());
+                c = JSON.parse(native.capabilities());
             } catch (e) {
                 c = browserCaps();
             }
@@ -141,7 +145,7 @@
     /** Name of this device for the server's activity view. */
     function deviceName() {
         try {
-            if (isAndroid) return window.FreeXNative.deviceName();
+            if (native) return native.deviceName();
             if (isWebOS) return "LG TV";
             if (isTizen) {
                 const model = window.webapis.productinfo && window.webapis.productinfo.getRealModel ? window.webapis.productinfo.getRealModel() : "";
@@ -156,7 +160,7 @@
     function exitApp() {
         try {
             if (isTizen) return window.tizen.application.getCurrentApplication().exit();
-            if (isAndroid) return window.FreeXNative.exit();
+            if (native) return native.exit();
             if (isWebOS && window.webOS && window.webOS.platformBack) return window.webOS.platformBack();
         } catch (e) {
             // nothing to close in a browser
@@ -427,11 +431,14 @@
         };
     }
 
-    // ------------------------------------------------------------------ Android / Fire TV
+    // ------------------------------------------------------------------ Android / Fire TV, FreeXHT
 
-    /** ExoPlayer in the Android app; it reports back through window.FreeXNativeEvent. */
-    function AndroidBackend(onEvent) {
-        const n = window.FreeXNative;
+    /**
+     * The player of the native shell around the page: ExoPlayer in the Android app, mpv on FreeXHT.
+     * It reports back through window.FreeXNativeEvent.
+     */
+    function NativeBackend(onEvent, name) {
+        const n = native;
         let st = {position: 0, duration: 0, playing: false};
         let pending = null;
         window.FreeXNativeEvent = (e) => {
@@ -450,7 +457,7 @@
             onEvent(e);
         };
         return {
-            name: "exoplayer",
+            name,
             open(url, o) {
                 st = {position: o.startMs || 0, duration: 0, playing: false};
                 return new Promise((resolve, reject) => {
@@ -476,9 +483,9 @@
 
     function createBackend(onEvent, forceHtml) {
         if (!forceHtml && isTizen) return TizenBackend(onEvent);
-        if (!forceHtml && isAndroid) return AndroidBackend(onEvent);
+        if (!forceHtml && native) return NativeBackend(onEvent, isFreeXHT ? "mpv" : "exoplayer");
         return HtmlBackend(onEvent);
     }
 
-    window.FreeXPlatform = {platform, caps, deviceName, exitApp, registerKeys, createBackend, isTizen, isAndroid, isWebOS};
+    window.FreeXPlatform = {platform, caps, deviceName, exitApp, registerKeys, createBackend, isTizen, isAndroid, isWebOS, isFreeXHT};
 })();

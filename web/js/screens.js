@@ -27,7 +27,7 @@
 
     const App = () => window.FreeXApp;
 
-    const APP_VERSION = "1.1.0";
+    const APP_VERSION = "1.2.0";
 
     // ------------------------------------------------------------------ building blocks
 
@@ -158,7 +158,7 @@
                 logo("big"),
                 h("h1", null, t("Connect to your FreeX server")),
                 h("p", {class: "muted"}, t("Enter the address of your FreeX Media Server, e.g. 192.168.1.10 or media.example.org. Without a port, 32500 is used.")),
-                f.el, msg, h("div", {class: "row-buttons"}, go)));
+                f.el, msg, h("div", {class: "row-buttons"}, go, window.FreeXHT ? window.FreeXHT.networkButton() : null)));
 
         async function submit() {
             const server = FX.normalizeServer(f.input.value);
@@ -314,6 +314,8 @@
                 return;
             }
             if (currentKey !== "home") return show("home");
+            // FreeXHT: no app to close, the box can switch off.
+            if (window.FreeXHT) return window.FreeXHT.powerMenu();
             dialog(t("Close FreeX?"), [t("Close"), t("Cancel")]).then((i) => {
                 if (i === 0) App().exit();
             });
@@ -558,6 +560,7 @@
                     btn(t("Change server"), () => {
                         App().signOut(true).then(() => App().reset(connect()));
                     }, {icon: "server"})),
+                window.FreeXHT ? window.FreeXHT.settingsSection() : null,
                 h("p", {class: "muted small"}, t("Audio and subtitle languages, the subtitle style and the default quality are set in FreeX Web in your settings; FreeX TV uses them too.")),
                 info));
 

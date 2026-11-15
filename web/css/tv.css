@@ -137,7 +137,8 @@ body.video-mode #video-layer {
     display: block;
 }
 
-body.platform-tizen.video-mode #video-layer, body.platform-android.video-mode #video-layer {
+body.platform-tizen.video-mode #video-layer, body.platform-android.video-mode #video-layer,
+body.platform-freexht.video-mode #video-layer {
     background: transparent;
 }
 
@@ -1468,4 +1469,205 @@ body.video-mode #app > .screen, body.video-mode #app > .splash {
 
 .no-gap .row-buttons > * {
     margin-bottom: 1rem;
+}
+
+/* ------------------------------------------------------------------ FreeXHT (system image) */
+
+.settings-body .freexht-system {
+    display: flex;
+    flex-direction: column;
+    gap: 2.4rem;
+}
+
+.freexht-system h2 {
+    margin: 1.2rem 0 0;
+    font-size: 3.2rem;
+    font-weight: 700;
+}
+
+.freexht-network .wifi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    max-height: 46vh;
+    padding: 1rem;
+    margin: -1rem;
+}
+
+.freexht-network .btn.wifi {
+    flex: none;
+    justify-content: space-between;
+    width: 100%;
+    gap: 3rem;
+}
+
+.freexht-network .btn.wifi .ssid {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.freexht-network .btn.wifi .meta {
+    font-size: 2.2rem;
+    font-weight: 500;
+    opacity: .75;
+}
+
+.freexht-network .btn.wifi .meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    height: 2.4rem;
+}
+
+.bars i {
+    width: 0.7rem;
+    border-radius: 0.2rem;
+    background: currentColor;
+    opacity: .25;
+}
+
+.bars i:nth-child(1) { height: 25%; }
+.bars i:nth-child(2) { height: 50%; }
+.bars i:nth-child(3) { height: 75%; }
+.bars i:nth-child(4) { height: 100%; }
+
+.bars i.on {
+    opacity: 1;
+}
+
+.freexht-network .btn.wifi.active {
+    box-shadow: inset 0 0 0 0.3rem var(--glass);
+}
+
+/* The on-screen keyboard: at the bottom, with its own field; the screen behind it dims. */
+.osk {
+    position: fixed;
+    z-index: 60;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3.2rem var(--safe-x) 4.4rem;
+    background: var(--ink-2);
+    box-shadow: 0 -2rem 6rem rgba(0, 0, 0, .6);
+    border-radius: 3.2rem 3.2rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2.4rem;
+}
+
+.osk[hidden] {
+    display: none;
+}
+
+body.osk-on #app {
+    opacity: .3;
+    transition: opacity .2s;
+}
+
+.osk-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.osk-label {
+    color: var(--muted);
+    font-size: 2.2rem;
+}
+
+.osk-field {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    height: 7.6rem;
+    padding: 0 2.4rem;
+    border-radius: 1.6rem;
+    border: 0.3rem solid #fff;
+    background: rgba(255, 255, 255, .12);
+    font-size: 3.2rem;
+    white-space: nowrap;
+}
+
+.osk-field.overflow {
+    justify-content: flex-end;
+}
+
+.osk-value {
+    flex: none;
+}
+
+.osk-value.empty {
+    color: var(--muted);
+}
+
+.osk-value.empty + .osk-caret {
+    order: -1;
+}
+
+.osk-caret {
+    flex: none;
+    width: 0.3rem;
+    height: 4rem;
+    margin-left: 0.3rem;
+    background: var(--brand-amber);
+    animation: osk-blink 1s steps(1) infinite;
+}
+
+@keyframes osk-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+.osk-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.osk-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.osk-key {
+    flex: 1 1 0;
+    height: 6.6rem;
+    border-radius: 1.4rem;
+    background: rgba(255, 255, 255, .08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    font-weight: 600;
+    transition: transform .1s var(--ease), background .1s, color .1s;
+}
+
+.osk-key.primary {
+    background: var(--brand);
+    color: #1d0d05;
+}
+
+.osk-key.on {
+    box-shadow: inset 0 0 0 0.3rem var(--glass);
+}
+
+.osk-key.focused {
+    background: #fff;
+    color: var(--ink);
+    transform: scale(1.08);
+}
+
+.no-gap .osk > * + *, .no-gap .osk-rows > * + *, .no-gap .freexht-system > * + * {
+    margin-top: 1.6rem;
+}
+
+.no-gap .osk-row > * + * {
+    margin-left: 1rem;
 }
