@@ -45,6 +45,12 @@
             opts.icon ? FX.icon(opts.icon) : null, label ? h("span", null, label) : null);
     }
 
+    // ------------------------------------------------------------------ weak boards
+
+    // Raspberry Pi 3 (or lite_ui in freexht.conf): no transitions or animations, every frame the
+    // browser does not have to draw is one the video and the remote get.
+    if (N.info().lite) document.documentElement.classList.add("lite");
+
     // ------------------------------------------------------------------ server from freexht.conf
 
     if (!FX.S.server && N.defaultServer()) {

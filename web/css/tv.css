@@ -1671,3 +1671,13 @@ body.osk-on #app {
 .no-gap .osk-row > * + * {
     margin-left: 1rem;
 }
+
+/* Weak boards (FreeXHT on a Raspberry Pi 3, html.lite): no transitions or animations. */
+html.lite *, html.lite *::before, html.lite *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+html.lite .spinner {
+    animation: spin 0.9s linear infinite !important;
+}

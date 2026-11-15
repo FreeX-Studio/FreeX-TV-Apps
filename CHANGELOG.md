@@ -10,6 +10,7 @@
   sign-in, restart and switch off; Back on the home screen offers switching off instead of closing the app; the server
   address can come from `freexht.conf`
 - Keys a browser knows only by name (Back, Select, media keys) work as remote keys on FreeXHT
+- FreeXHT on weak boards (Raspberry Pi 3, or `lite_ui` in freexht.conf): no transitions or animations
 
 ## FreeX TV 1.1.0
 
