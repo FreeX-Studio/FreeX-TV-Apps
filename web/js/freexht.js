@@ -11,12 +11,14 @@
  */
 
 /*
- * FreeXHT, the FreeX system image for Raspberry Pi and PCs (repository FreeX-HT): what the
- * interface needs there and the TVs bring themselves.
+ * FreeXHT, the FreeX system image for Raspberry Pi and PCs (repository FreeX-HT), and the TV mode
+ * of FreeX Desktop (same bridge, info().shell "desktop"): what the interface needs there and the
+ * TVs bring themselves.
  *
  *  - an on-screen keyboard for text fields (a TV remote has no letters),
  *  - the keys of the remote that arrive only as key names (Back, Select, media keys),
- *  - the box in the settings: network, Wi-Fi, restart and power off,
+ *  - the box in the settings: network, Wi-Fi, restart and power off (FreeX Desktop: leave the TV
+ *    mode, quit, start in the TV mode at login),
  *  - the server address from freexht.conf on the boot partition.
  *
  * Does nothing on other platforms. The native side is window.FreeXNative from FreeX-HT
@@ -38,6 +40,8 @@
     const t = FX.t;
     const App = () => window.FreeXApp;
     const Screens = () => window.FreeXScreens;
+    /** "box" (FreeXHT) or "desktop" (the TV mode of FreeX Desktop). */
+    const SHELL = N.info().shell || "box";
 
     function btn(label, onclick, opts) {
         opts = opts || {};
@@ -392,8 +396,15 @@
         });
     }
 
-    /** Back on the home screen: there is no app to close, the box can restart or switch off. */
+    /** Back on the home screen: there is no app to close, the box can restart or switch off.
+     *  FreeX Desktop: close the app or go back to its normal window. */
     function powerMenu() {
+        if (SHELL === "desktop") {
+            return Screens().dialog(t("Close FreeX?"), [t("Close"), t("Leave TV mode"), t("Cancel")]).then((i) => {
+                if (i === 0) N.call("app.quit").catch((e) => FX.toast(e.message));
+                if (i === 1) N.call("tv.leave").catch((e) => FX.toast(e.message));
+            });
+        }
         return Screens().dialog(t("Switch the box off?"), [t("Switch off"), t("Restart"), t("Cancel")]).then((i) => {
             if (i === 0) N.call("power", {action: "poweroff"}).catch((e) => FX.toast(e.message));
             if (i === 1) N.call("power", {action: "reboot"}).catch((e) => FX.toast(e.message));
@@ -402,7 +413,34 @@
 
     // ------------------------------------------------------------------ settings
 
+    /** FreeX Desktop in the TV mode: leave it, quit, and start in it at login. */
+    function desktopSection() {
+        const info = N.info();
+        const kv = (k, v) => h("div", {class: "kv"}, h("span", null, k), v);
+        const auto = h("span", null, t("Start in TV mode at login"));
+        const autoBtn = btn("", () => {
+            N.call("autostart.set", {on: !autoBtn._on}).then(show).catch((e) => FX.toast(e.message));
+        });
+        autoBtn.appendChild(auto);
+        function show(on) {
+            autoBtn._on = !!on;
+            autoBtn.classList.toggle("primary", autoBtn._on);
+            auto.textContent = t("Start in TV mode at login") + ": " + (autoBtn._on ? t("On") : t("Off"));
+        }
+        N.call("autostart.get").then(show).catch(() => {
+            autoBtn.hidden = true;
+        });
+        return h("div", {class: "freexht-system"},
+            h("h2", null, t("FreeX Desktop")),
+            h("div", {class: "card-box"}, kv(t("Version"), h("b", null, info.version))),
+            h("div", {class: "row-buttons"},
+                btn(t("Leave TV mode"), () => N.call("tv.leave").catch((e) => FX.toast(e.message)), {icon: "exit"}),
+                autoBtn,
+                btn(t("Quit FreeX"), () => N.call("app.quit").catch((e) => FX.toast(e.message)))));
+    }
+
     function settingsSection() {
+        if (SHELL === "desktop") return desktopSection();
         const info = N.info();
         const kv = (k, v) => h("div", {class: "kv"}, h("span", null, k), v);
         const net = h("b", null, "…");
@@ -428,6 +466,7 @@
 
     /** For screens without a server yet (connect, offline): the network settings. */
     function networkButton() {
+        if (SHELL === "desktop") return null;
         return btn(t("Network"), () => App().push(networkScreen()), {icon: "server"});
     }
 

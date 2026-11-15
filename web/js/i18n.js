@@ -154,6 +154,12 @@
         "This box has no Wi-Fi.": "Diese Box hat kein WLAN.",
         "Wi-Fi is not available: {0}": "WLAN ist nicht verfügbar: {0}",
         "Wi-Fi “{0}”": "WLAN „{0}“",
+        "FreeX Desktop": "FreeX Desktop",
+        "Leave TV mode": "TV-Modus beenden",
+        "On": "An",
+        "Quit FreeX": "FreeX beenden",
+        "Start in TV mode at login": "Bei der Anmeldung im TV-Modus starten",
+        "Version": "Version",
     };
 
     const TABLES = {de: DE};
