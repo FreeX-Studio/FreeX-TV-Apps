@@ -94,6 +94,7 @@
         "Subtitles: {0}": "Untertitel: {0}",
         "Switch": "Wechseln",
         "Switch user": "Benutzer wechseln",
+        "The player could not jump to this position.": "Der Player konnte nicht an diese Stelle springen.",
         "The server cannot be reached": "Der Server ist nicht erreichbar",
         "The subtitles could not be loaded.": "Die Untertitel konnten nicht geladen werden.",
         "The title cannot be played on this device.": "Der Titel kann auf diesem Gerät nicht abgespielt werden.",

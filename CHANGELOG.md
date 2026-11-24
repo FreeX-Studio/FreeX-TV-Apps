@@ -1,5 +1,12 @@
 # Changelog
 
+## FreeX TV 1.2.1
+
+- **Samsung: jumping in the player works.** Some models refuse AVPlay's `seekTo` (with direct play and
+  conversions); the app then jumps by the difference (`jumpForward` / `jumpBackward`). Seeks run one at a time,
+  only the newest target counts, and the time shown stays at the target while the TV seeks. If the TV refuses
+  both, a message says so instead of nothing happening
+
 ## FreeX TV 1.2.0
 
 - **FreeXHT**, the FreeX system image for Raspberry Pi 3/4/5 and PCs ([FreeX-HT](https://github.com/FreeX-Studio/FreeX-HT)):

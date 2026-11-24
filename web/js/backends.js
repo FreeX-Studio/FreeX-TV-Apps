@@ -274,6 +274,11 @@
 
     // ------------------------------------------------------------------ Samsung AVPlay
 
+    function errorText(e) {
+        if (!e) return "";
+        return String(e.name || e.message || e.code || e);
+    }
+
     function TizenBackend(onEvent) {
         const av = window.webapis.avplay;
         const layer = document.getElementById("video-layer");
@@ -287,6 +292,53 @@
         let paused = false;
         let pos = 0;
         let ended = false;
+        // AVPlay takes one seek at a time: later targets wait here, only the newest one counts.
+        let seeking = false;
+        let pendingSeek = null;
+
+        /**
+         * Seeks to the newest target. AVPlay refuses seekTo on some models and streams (and while
+         * it is still preparing); then it jumps by the difference with jumpForward / jumpBackward.
+         * A failure is reported, so the user does not just see nothing happen.
+         */
+        function runSeek() {
+            if (pendingSeek === null) return;
+            const target = pendingSeek;
+            pendingSeek = null;
+            seeking = true;
+            let from = 0;
+            try {
+                from = av.getCurrentTime();
+            } catch (e) {
+                from = pos;
+            }
+            const done = () => {
+                seeking = false;
+                pos = target;
+                onEvent({type: "time"});
+                if (pendingSeek !== null) runSeek();
+            };
+            const failed = (e) => {
+                seeking = false;
+                pos = from;
+                onEvent({type: "seekerror", message: errorText(e)});
+                if (pendingSeek !== null) runSeek();
+            };
+            const jump = () => {
+                const delta = target - from;
+                try {
+                    if (delta >= 0) av.jumpForward(delta, done, failed);
+                    else av.jumpBackward(-delta, done, failed);
+                } catch (e) {
+                    failed(e);
+                }
+            };
+            try {
+                av.seekTo(target, done, jump);
+            } catch (e) {
+                jump();
+            }
+        }
 
         function state() {
             try {
@@ -302,7 +354,8 @@
                 onbufferingprogress: () => null,
                 onbufferingcomplete: () => onEvent({type: "buffering", on: false}),
                 oncurrentplaytime: (ms) => {
-                    pos = ms;
+                    // While a seek runs, AVPlay still reports the old time: keep showing the target.
+                    if (!seeking) pos = ms;
                     onEvent({type: "time"});
                 },
                 onstreamcompleted: () => {
@@ -384,12 +437,9 @@
                 }
             },
             seek(ms) {
-                pos = Math.max(0, ms);
-                try {
-                    av.seekTo(Math.round(pos), () => onEvent({type: "time"}), () => null);
-                } catch (e) {
-                    // not seekable yet
-                }
+                pendingSeek = Math.max(0, Math.round(ms));
+                pos = pendingSeek;
+                if (!seeking) runSeek();
             },
             stop() {
                 try {

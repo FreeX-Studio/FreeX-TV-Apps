@@ -358,6 +358,9 @@
                 spinner.hidden = !e.on;
             } else if (e.type === "state") {
                 update();
+            } else if (e.type === "seekerror") {
+                FX.toast(t("The player could not jump to this position.") + (e.message ? " (" + e.message + ")" : ""), true);
+                update();
             } else if (e.type === "ended") {
                 ended();
             } else if (e.type === "error" && !state.loading) {
