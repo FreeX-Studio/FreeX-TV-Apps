@@ -14,7 +14,7 @@
 #   build/tizen/                    the Tizen web project (shared web client + config.xml)
 #   build/FreeX-TV-Tizen-<v>.zip    the same as an archive, to import into Tizen Studio
 #                                   (File → Import → Tizen → Tizen Project → Archive file)
-#   build/FreeX.wgt                 the signed package, if the Tizen CLI is installed
+#   build/FreeX-TV-Tizen-<v>.wgt    the signed package, if the Tizen CLI is installed
 #
 # Signing needs a certificate profile from Tizen Studio's Certificate Manager (a Samsung
 # certificate that names your TV's DUID). Its name goes in TIZEN_PROFILE (default "FreeX").
@@ -50,8 +50,10 @@ if [ -z "$TIZEN" ] && [ -x "$HOME/tizen-studio/tools/ide/bin/tizen" ]; then
     TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
 fi
 if [ -n "$TIZEN" ]; then
-    "$TIZEN" package -t wgt -s "$PROFILE" -- "$APP" -o "$OUT"
-    echo "Package:       $(ls "$OUT"/*.wgt)"
+    "$TIZEN" package -t wgt -s "$PROFILE" -o "$OUT" -- "$APP"
+    WGT=$(ls -t "$OUT"/*.wgt | head -n 1)
+    mv "$WGT" "$OUT/FreeX-TV-Tizen-$VERSION.wgt"
+    echo "Package:       $OUT/FreeX-TV-Tizen-$VERSION.wgt"
 else
-    echo "Tizen CLI not found: import the project into Tizen Studio, or install the CLI to build FreeX.wgt."
+    echo "Tizen CLI not found: import the project into Tizen Studio, or install the CLI to build the signed .wgt."
 fi

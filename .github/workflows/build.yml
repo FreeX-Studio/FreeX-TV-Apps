@@ -1,16 +1,29 @@
-# Builds FreeX TV: the Android TV / Fire TV APK, the Samsung (Tizen) project and the LG (webOS)
-# package. On a tag v*, all are attached to a GitHub release.
+# Builds FreeX TV: the Android TV / Fire TV APK, the Samsung (Tizen) project (signed .wgt when the
+# Samsung certificate is in the secrets) and the LG (webOS) package. Releases are made by
+# release.yml, which calls this workflow for the release commit.
+#
+# Secrets (all optional):
+#   FREEX_KEYSTORE_BASE64, FREEX_KEYSTORE_PASSWORD, FREEX_KEY_ALIAS, FREEX_KEY_PASSWORD
+#       release key for the APK (otherwise the debug key signs)
+#   TIZEN_AUTHOR_P12_BASE64, TIZEN_AUTHOR_PASSWORD, TIZEN_DISTRIBUTOR_P12_BASE64, TIZEN_DISTRIBUTOR_PASSWORD
+#       Samsung certificate profile (author.p12 and distributor.p12 from tizen-studio-data/keystore)
+#       for the signed .wgt; it installs only on the TVs whose DUID is in the distributor certificate
 name: Build
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit, branch or tag to build
+        type: string
+        required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   web:
@@ -18,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -37,6 +52,8 @@ jobs:
     needs: web
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -73,12 +90,57 @@ jobs:
     needs: web
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Samsung certificate
+        env:
+          AUTHOR_P12: ${{ secrets.TIZEN_AUTHOR_P12_BASE64 }}
+          AUTHOR_PASSWORD: ${{ secrets.TIZEN_AUTHOR_PASSWORD }}
+          DISTRIBUTOR_P12: ${{ secrets.TIZEN_DISTRIBUTOR_P12_BASE64 }}
+          DISTRIBUTOR_PASSWORD: ${{ secrets.TIZEN_DISTRIBUTOR_PASSWORD }}
+        run: |
+          if [ -z "$AUTHOR_P12" ] || [ -z "$DISTRIBUTOR_P12" ]; then
+            echo "No Samsung certificate in the secrets: only the project archive is built."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/tizen-keys"
+          echo "$AUTHOR_P12" | base64 -d > "$RUNNER_TEMP/tizen-keys/author.p12"
+          echo "$DISTRIBUTOR_P12" | base64 -d > "$RUNNER_TEMP/tizen-keys/distributor.p12"
+          echo "SIGN=1" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        if: env.SIGN == '1'
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Tizen CLI
+        if: env.SIGN == '1'
+        env:
+          TIZEN_STUDIO: "5.5"
+          AUTHOR_PASSWORD: ${{ secrets.TIZEN_AUTHOR_PASSWORD }}
+          DISTRIBUTOR_PASSWORD: ${{ secrets.TIZEN_DISTRIBUTOR_PASSWORD }}
+        run: |
+          wget -q -O "$RUNNER_TEMP/web-cli.bin" \
+            "https://download.tizen.org/sdk/Installer/tizen-studio_${TIZEN_STUDIO}/web-cli_Tizen_Studio_${TIZEN_STUDIO}_ubuntu-64.bin"
+          chmod +x "$RUNNER_TEMP/web-cli.bin"
+          "$RUNNER_TEMP/web-cli.bin" --accept-license "$HOME/tizen-studio"
+          TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
+          "$TIZEN" version
+          "$TIZEN" security-profiles add -n FreeX \
+            -a "$RUNNER_TEMP/tizen-keys/author.p12" -p "$AUTHOR_PASSWORD" \
+            -d "$RUNNER_TEMP/tizen-keys/distributor.p12" -dp "$DISTRIBUTOR_PASSWORD"
+          echo "TIZEN_CLI=$TIZEN" >> "$GITHUB_ENV"
+          echo "TIZEN_PROFILE=FreeX" >> "$GITHUB_ENV"
       - name: Build
         run: tizen/build.sh
+      - name: Remove the certificate
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/tizen-keys"
       - uses: actions/upload-artifact@v4
         with:
           name: freex-tv-tizen
-          path: build/FreeX-TV-Tizen-*.zip
+          path: |
+            build/FreeX-TV-Tizen-*.zip
+            build/FreeX-TV-Tizen-*.wgt
 
   webos:
     name: LG (webOS)
@@ -86,6 +148,8 @@ jobs:
     needs: web
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -95,17 +159,3 @@ jobs:
         with:
           name: freex-tv-webos
           path: build/*.ipk
-
-  release:
-    name: Release
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    needs: [android, tizen, webos]
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*

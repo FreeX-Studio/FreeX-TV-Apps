@@ -1,0 +1,103 @@
+# Releases FreeX TV: Actions → Release → Run workflow, enter the version (e.g. 1.3.0).
+#
+# Sets the version in web/version.json and web/js/screens.js, commits it to main and tags it
+# v<version>, builds all apps from that commit (build.yml) and publishes a GitHub release with the
+# APK, the Samsung archive (and signed .wgt) and the LG package. The notes come from the version's
+# section in CHANGELOG.md ("## FreeX TV <version>").
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version (x.y.z)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Version ${{ inputs.version }}
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The version must look like 1.2.3, not '$VERSION'."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION exists already."
+            exit 1
+          fi
+      - name: Set the version, commit and tag
+        id: tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          printf '{"version": "%s"}\n' "$VERSION" > web/version.json
+          sed -i "s/const APP_VERSION = \"[^\"]*\";/const APP_VERSION = \"$VERSION\";/" web/js/screens.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git commit -am "Release $VERSION"
+            git push origin HEAD:main
+          fi
+          git tag -a "v$VERSION" -m "FreeX TV $VERSION"
+          git push origin "v$VERSION"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    needs: prepare
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ needs.prepare.outputs.tag }}
+    secrets: inherit
+
+  publish:
+    name: Publish
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release notes
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          awk -v head="## FreeX TV $VERSION" '
+            $0 == head {on = 1; next}
+            on && /^## / {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ] || ! grep -q '[^[:space:]]' notes.md; then
+            echo "FreeX TV $VERSION" > notes.md
+          fi
+          cat notes.md
+          ls -la dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: FreeX TV ${{ inputs.version }}
+          body_path: notes.md
+          files: dist/*

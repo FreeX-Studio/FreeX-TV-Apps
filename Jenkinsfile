@@ -16,7 +16,7 @@
 // if it is not under /usr/lib/jvm), the Android SDK (ANDROID_HOME, platform 35 and build tools; the
 // Gradle wrapper fetches everything else), zip, and Node.js for the LG package (the webOS CLI
 // comes through npx). With the Tizen CLI (tizen in PATH or
-// ~/tizen-studio) and a certificate profile named in TIZEN_PROFILE it also signs FreeX.wgt.
+// ~/tizen-studio) and a certificate profile named in TIZEN_PROFILE it also signs FreeX-TV-Tizen-<version>.wgt.
 // The Android SDK once, as the Jenkins user (the command line tools from developer.android.com):
 //
 //   mkdir -p ~/android-sdk/cmdline-tools && cd ~/android-sdk/cmdline-tools

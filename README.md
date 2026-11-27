@@ -70,8 +70,8 @@ certificate:
 4. Build and install:
 
    ```bash
-   TIZEN_PROFILE=<your profile> tizen/build.sh      # → build/FreeX.wgt
-   tizen install -n build/FreeX.wgt -t <tv-name>    # name as in the Device Manager / `sdb devices`
+   TIZEN_PROFILE=<your profile> tizen/build.sh      # → build/FreeX-TV-Tizen-<version>.wgt
+   tizen install -n build/FreeX-TV-Tizen-<version>.wgt -t <tv-name>    # name as in the Device Manager / `sdb devices`
    ```
 
    Without the CLI: unpack `FreeX-TV-Tizen-<version>.zip` (from the releases or `tizen/build.sh`), import it in
@@ -152,14 +152,15 @@ user's settings in FreeX Web.
 |---|---|
 | Android | `cd android && ./gradlew assembleRelease` (JDK 17, Android SDK 35) → `android/app/build/outputs/apk/release/app-release.apk`. Signed with the debug key unless `FREEX_KEYSTORE`, `FREEX_KEYSTORE_PASSWORD`, `FREEX_KEY_ALIAS` and `FREEX_KEY_PASSWORD` name a release keystore. |
 | LG | `webos/build.sh` → `build/webos/` and `build/de.mirranet.freex.tv_<version>_all.ipk` (with Node.js; the webOS CLI comes through npx when it is not installed). |
-| Samsung | `tizen/build.sh` → `build/tizen/` (the project) and `build/FreeX-TV-Tizen-<version>.zip`; with the Tizen CLI also the signed `build/FreeX.wgt`. |
-| CI | GitHub Actions (`.github/workflows/build.yml`) builds all three on every push; a tag `v*` publishes a release. A `Jenkinsfile` does the same on a Jenkins agent with the Android SDK. |
+| Samsung | `tizen/build.sh` → `build/tizen/` (the project) and `build/FreeX-TV-Tizen-<version>.zip`; with the Tizen CLI also the signed `build/FreeX-TV-Tizen-<version>.wgt`. |
+| CI | GitHub Actions (`.github/workflows/build.yml`) builds all apps on every push; the files are under the run's *Artifacts*. With the Samsung certificate in the secrets (see the head of `build.yml`) it also signs the Samsung `.wgt`. A `Jenkinsfile` does the same on a Jenkins agent with the Android SDK. |
+| Release | *Actions → Release → Run workflow*, enter the version (e.g. `1.3.0`): sets it in `web/version.json`, commits and tags `v<version>`, builds everything and publishes a GitHub release with the files; the notes are the version's section in `CHANGELOG.md`. |
 
 The interface can be developed in any browser: serve `web/` (e.g. `python3 -m http.server -d web 8088`), open it at
 1920 × 1080 and use the arrow keys, Enter and Escape. It then plays with `<video>` and hls.js.
 
-The version is kept in `web/version.json` (and `APP_VERSION` in `web/js/screens.js`); the Android version code
-is derived from it.
+The version is kept in `web/version.json` (and `APP_VERSION` in `web/js/screens.js`); the Release workflow sets
+both, and the Android version code is derived from it.
 
 ## Project structure
 
