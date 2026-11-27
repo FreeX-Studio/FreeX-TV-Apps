@@ -27,7 +27,7 @@
 
     const App = () => window.FreeXApp;
 
-    const APP_VERSION = "1.2.1";
+    const APP_VERSION = "1.1.0";
 
     // ------------------------------------------------------------------ building blocks
 
